@@ -187,7 +187,7 @@ process.stdin.on('data', (input) => {
 });
 
 // Запуск сервера
-const PORT = process.env.PORT || 1488;
+const PORT = 49442;
 server.listen(PORT, () => {
     console.log(`Server running at https://test2-i61r.onrender.com:${PORT}`);
     initializeTrackQueue(); // Инициализируем очередь треков
