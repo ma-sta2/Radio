@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Радио</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+            transition: background-color 2s;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 36px;
+        }
+
+        p, button {
+            margin: 20px auto;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        #start-radio {
+            font-size: 20px;
+            padding: 10px 30px;
+        }
+
+        #like {
+            background-color: gray;
+            border: none;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        #like.liked {
+            background-color: green;
+        }
+
+        #report {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: red;
+            border: none;
+            color: white;
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+
+        #report.disabled {
+            background-color: gray;
+        }
+
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        #queue {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            font-size: 14px;
+        }
+
+        #queue ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #queue li {
+            color: inherit;
+            transition: color 0.3s;
+        }
+
+        audio {
+            display: none;
+        }
+
+        /* Адаптация для мобильных устройств */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            #info, #queue {
+                font-size: 12px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Информация о пользователях -->
+    <div id="info">
+        <div id="online">В сети: 0</div>
+        <div id="likes">Нравится пользователям: 0</div>
+    </div>
+
+    <!-- Очередь треков -->
+    <div id="queue">
+        <div>Очередь:</div>
+        <ul id="track-queue"></ul>
+    </div>
+
+    <!-- Контент радио -->
+    <h1>Random Радио</h1>
+    <p id="track">Текущий трек: ---</p>
+    <button id="start-radio">Запустить радио</button>
+    <button id="like">Лайк</button>
+    <audio id="audio" autoplay></audio>
+    <button id="report">Репорт</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const audio = document.getElementById('audio');
+        const track = document.getElementById('track');
+        const online = document.getElementById('online');
+        const likes = document.getElementById('likes');
+        const likeButton = document.getElementById('like');
+        const reportButton = document.getElementById('report');
+        const startRadioButton = document.getElementById('start-radio');
+        const trackQueue = document.getElementById('track-queue');
+
+        // Автоматический запуск радио
+        function startRadio() {
+            startRadioButton.style.display = 'none'; // Прячем кнопку
+            audio.play();
+        }
+
+        startRadioButton.addEventListener('click', startRadio);
+
+        // Получение информации о треке
+        let lastTrack = null; // Храним последний трек
+
+        socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
+            const clientTime = Date.now();
+            const latency = (clientTime - serverTime) / 2;
+            const adjustedElapsed = elapsed + latency / 1000;
+
+            // Обновляем только если трек изменился
+            if (lastTrack !== trackName) {
+                lastTrack = trackName;
+                audio.src = '/stream';
+                audio.currentTime = adjustedElapsed;
+                audio.play();
+
+                // Сбрасываем состояние кнопок
+                likeButton.classList.remove('liked');
+                likeButton.disabled = false;
+
+                // Обновляем фон и цвета
+                const newColor = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                document.body.style.backgroundColor = newColor;
+                adjustQueueTextColor(newColor);
+            }
+
+            track.textContent = `Текущий трек: ${trackName}`;
+            likes.textContent = `Нравится пользователям: ${trackLikes}`;
+
+            // Обновление очереди треков
+            trackQueue.innerHTML = queue.slice(0, 3).map(q => `<li>${q}</li>`).join('');
+        });
+
+        // Обновление цвета текста в зависимости от фона
+        function adjustQueueTextColor(backgroundColor) {
+            const rgb = backgroundColor.match(/\d+/g).map(Number); // Извлекаем значения RGB
+            const brightness = Math.sqrt(0.299 * rgb[0] ** 2 + 0.587 * rgb[1] ** 2 + 0.114 * rgb[2] ** 2); // Расчет яркости
+            const textColor = brightness > 128 ? 'black' : 'white';
+            trackQueue.style.color = textColor; // Устанавливаем цвет текста
+        }
+
+        // Обновление онлайна
+        socket.on('online', (count) => {
+            online.textContent = `В сети: ${count}`;
+        });
+
+        // Лайк
+        likeButton.addEventListener('click', () => {
+            socket.emit('like');
+            likeButton.disabled = true;
+            likeButton.classList.add('liked');
+        });
+
+        // Репорт
+        reportButton.addEventListener('click', () => {
+            socket.emit('report');
+            reportButton.disabled = true;
+            reportButton.classList.add('disabled'); // Меняем цвет на серый
+        });
+
+        window.onload = function () {
+            const initialColor = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+            document.body.style.backgroundColor = initialColor;
+            adjustQueueTextColor(initialColor);
+        };
+    </script>
+</body>
+</html>
