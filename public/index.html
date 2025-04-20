@@ -161,7 +161,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
+<script>
   const socket = io();
   const audio = document.getElementById('audio');
   const track = document.getElementById('track');
@@ -174,21 +174,21 @@
 
   let lastTrack = null;
 
-  function startRadio() {
-    startRadioButton.style.display = 'none';
-    audio.play();
+  // Обновление количества онлайн и лайков без анимации
+  function updateTextNumber(element, value) {
+    element.textContent = value.toString();
+    element.setAttribute('data-value', value);
   }
 
-  startRadioButton.addEventListener('click', startRadio);
-
-  // Авто-скрытие кнопки при autoplay (на десктопе)
-  window.addEventListener('DOMContentLoaded', () => {
+  function startRadio() {
     audio.play().then(() => {
       startRadioButton.style.display = 'none';
     }).catch(() => {
-      // Автозапуск заблокирован (например, на телефоне)
+      startRadioButton.style.display = 'block';
     });
-  });
+  }
+
+  startRadioButton.addEventListener('click', startRadio);
 
   socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
     const clientTime = Date.now();
@@ -200,8 +200,11 @@
       audio.src = '/stream';
       audio.currentTime = adjustedElapsed;
       audio.play().then(() => {
-        startRadioButton.style.display = 'none'; // если вдруг теперь получилось — скрыть
+        startRadioButton.style.display = 'none';
+      }).catch(() => {
+        startRadioButton.style.display = 'block';
       });
+
       likeButton.classList.remove('liked');
       likeButton.disabled = false;
 
@@ -211,13 +214,12 @@
     }
 
     track.textContent = `Now playing: ${trackName}`;
-    online.querySelector('span').textContent = onlineCount;
-    likes.querySelector('span').textContent = trackLikes;
-    trackQueue.innerHTML = queue.map(q => `<li>${q}</li>`).join('');
+    updateTextNumber(likes, trackLikes);
+    trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
   });
 
-  socket.on('online', (onlineCount) => {
-    online.querySelector('span').textContent = onlineCount;
+  socket.on('online', (count) => {
+    updateTextNumber(online, count);
   });
 
   likeButton.addEventListener('click', () => {
@@ -255,11 +257,14 @@
     }
   }
 
+  // Попытка автозапуска при загрузке страницы
   window.onload = () => {
     const color = getRandomColor();
     applyGradient(color);
     createBlobs(color);
+    startRadio();
   };
 </script>
+
 </body>
 </html>
