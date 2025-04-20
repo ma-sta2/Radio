@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Random Радио</title>
+    <title>Random Radio</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         html, body {
@@ -143,20 +143,20 @@
     <div id="background"></div>
 
     <div id="info">
-        <div>В сети: <span class="animated-number" id="online"><span>0</span></span></div>
-        <div>Нравится пользователям: <span class="animated-number" id="likes"><span>0</span></span></div>
+        <div>Online: <span class="animated-number" id="online"><span>0</span></span></div>
+        <div>Likes: <span class="animated-number" id="likes"><span>0</span></span></div>
     </div>
 
     <div id="queue">
-        <div>Очередь:</div>
+        <div>Track queue:</div>
         <ul id="track-queue"></ul>
     </div>
 
     <div class="content">
-        <h1>Random Радио</h1>
-        <p id="track">Текущий трек: ---</p>
-        <button id="start-radio">Запустить радио</button>
-        <button id="like">Лайк</button>
+        <h1>Random Radio</h1>
+        <p id="track">Current track: ---</p>
+        <button id="start-radio">Start radio</button>
+        <button id="like">Like</button>
         <audio id="audio" autoplay></audio>
     </div>
 
@@ -201,8 +201,15 @@
 
             track.textContent = `Текущий трек: ${trackName}`;
 
-            animateNumberChange(likes, trackLikes);
+            // Анимация лайков и онлайна
+            animateNumberChange(document.getElementById('likes'), trackLikes);
+            animateNumberChange(document.getElementById('online'), onlineCount);
+
+            // Очередь ТОЛЬКО 5 элементов, всегда
+            const q = queue.slice(0, 5);
+            trackQueue.innerHTML = q.map(q => `<li>${q}</li>`).join('');
         });
+
 
         socket.on('online', (count) => {
             animateNumberChange(online, count);
@@ -212,11 +219,6 @@
             socket.emit('like');
             likeButton.disabled = true;
             likeButton.classList.add('liked');
-        });
-
-        socket.on('track-info', ({ queue }) => {
-            const q = queue.slice(0, 5);
-            trackQueue.innerHTML = q.map(q => `<li>${q}</li>`).join('');
         });
 
         function getRandomColor() {
@@ -249,24 +251,30 @@
         }
 
         function animateNumberChange(container, newValue) {
-            const oldValue = container.textContent;
+            const oldSpan = container.querySelector('span');
+            const oldValue = oldSpan?.textContent || "0";
+
             if (oldValue == newValue) return;
 
-            const span = container.querySelector('span');
             const newSpan = document.createElement('span');
             newSpan.textContent = newValue;
             newSpan.style.transform = 'translateY(100%)';
+            newSpan.style.position = 'absolute';
+            newSpan.style.left = '0';
+            newSpan.style.width = '100%';
+
             container.appendChild(newSpan);
 
             requestAnimationFrame(() => {
-                span.style.transform = 'translateY(-100%)';
-                newSpan.style.transform = 'translateY(0%)';
+                oldSpan.style.transform = 'translateY(-100%)';
+                newSpan.style.transform = 'translateY(0)';
             });
 
             setTimeout(() => {
-                span.remove();
+                oldSpan.remove();
             }, 400);
         }
+
 
         window.onload = () => {
             const color = getRandomColor();
