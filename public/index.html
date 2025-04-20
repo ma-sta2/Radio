@@ -1,286 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Random Radio</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Poppins', sans-serif;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Radio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+    }
 
-        body {
-            position: relative;
-            color: white;
-            text-align: center;
-            background: black;
-        }
+    body {
+      position: relative;
+      color: white;
+      text-align: center;
+      background: black;
+    }
 
-        #background {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
+    #background {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
 
-        .blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.6;
-            animation: float 20s infinite ease-in-out;
-        }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.6;
+      animation: float 20s infinite ease-in-out;
+    }
 
-        @keyframes float {
-            0%   { transform: translateY(0) translateX(0); }
-            50%  { transform: translateY(-50px) translateX(50px); }
-            100% { transform: translateY(0) translateX(0); }
-        }
+    @keyframes float {
+      0%   { transform: translateY(0) translateX(0); }
+      50%  { transform: translateY(-50px) translateX(50px); }
+      100% { transform: translateY(0) translateX(0); }
+    }
 
-        .content {
-            position: relative;
-            z-index: 1;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+    .content {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
 
-        h1 {
-            font-size: 42px;
-            margin: 0;
-            font-weight: 600;
-        }
+    h1 {
+      font-size: 42px;
+      margin: 0;
+      font-weight: 600;
+    }
 
-        p {
-            font-size: 18px;
-            margin: 20px auto;
-        }
+    p {
+      font-size: 18px;
+      margin: 20px auto;
+    }
 
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-            border: none;
-            border-radius: 12px;
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            margin: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-        }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: white;
+      margin: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
 
-        button:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-            transform: scale(1.05);
-        }
+    button:hover {
+      background-color: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
 
-        #like.liked {
-            background-color: rgba(0, 255, 100, 0.6);
-        }
+    #like.liked {
+      background-color: rgba(0, 255, 100, 0.6);
+    }
 
-        #info, #queue {
-            position: absolute;
-            font-size: 14px;
-            z-index: 2;
-        }
+    #info, #queue {
+      position: absolute;
+      font-size: 14px;
+      z-index: 2;
+    }
 
-        #info {
-            top: 10px;
-            left: 10px;
-            text-align: left;
-        }
+    #info {
+      top: 10px;
+      left: 10px;
+      text-align: left;
+    }
 
-        #queue {
-            top: 10px;
-            right: 10px;
-            text-align: right;
-        }
+    #queue {
+      top: 10px;
+      right: 10px;
+      text-align: right;
+    }
 
-        #queue ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+    #queue ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
 
-        #queue li {
-            color: inherit;
-            transition: color 0.3s;
-        }
+    #queue li {
+      color: inherit;
+      transition: color 0.3s;
+    }
 
-        .animated-number {
-            display: inline-block;
-            position: relative;
-            height: 20px;
-            overflow: hidden;
-        }
+    .animated-number {
+      display: inline-block;
+      position: relative;
+      height: 20px;
+      overflow: hidden;
+    }
 
-        .animated-number span {
-            position: absolute;
-            left: 0;
-            width: 100%;
-            transition: transform 0.4s ease;
-        }
+    .animated-number span {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      transition: transform 0.4s ease;
+    }
 
-        audio {
-            display: none;
-        }
+    audio {
+      display: none;
+    }
 
-        @media (max-width: 768px) {
-            h1 { font-size: 28px; }
-            #info, #queue { font-size: 12px; }
-            button { font-size: 14px; padding: 10px 20px; }
-        }
-    </style>
+    @media (max-width: 768px) {
+      h1 { font-size: 28px; }
+      #info, #queue { font-size: 12px; }
+      button { font-size: 14px; padding: 10px 20px; }
+    }
+  </style>
 </head>
 <body>
-    <div id="background"></div>
+  <div id="background"></div>
 
-    <div id="info">
-        <div>Online: <span class="animated-number" id="online"><span>0</span></span></div>
-        <div>Likes: <span class="animated-number" id="likes"><span>0</span></span></div>
-    </div>
+  <div id="info">
+    <div>Online: <span class="animated-number" id="online" data-value="0"><span>0</span></span></div>
+    <div>Liked by users: <span class="animated-number" id="likes" data-value="0"><span>0</span></span></div>
+  </div>
 
-    <div id="queue">
-        <div>Track queue:</div>
-        <ul id="track-queue"></ul>
-    </div>
+  <div id="queue">
+    <div>Up next:</div>
+    <ul id="track-queue"></ul>
+  </div>
 
-    <div class="content">
-        <h1>Random Radio</h1>
-        <p id="track">Current track: ---</p>
-        <button id="start-radio">Start radio</button>
-        <button id="like">Like</button>
-        <audio id="audio" autoplay></audio>
-    </div>
+  <div class="content">
+    <h1>Random Radio</h1>
+    <p id="track">Now playing: ---</p>
+    <button id="start-radio">Start Radio</button>
+    <button id="like">Like</button>
+    <audio id="audio" autoplay></audio>
+  </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-        const audio = document.getElementById('audio');
-        const track = document.getElementById('track');
-        const online = document.getElementById('online');
-        const likes = document.getElementById('likes');
-        const likeButton = document.getElementById('like');
-        const startRadioButton = document.getElementById('start-radio');
-        const trackQueue = document.getElementById('track-queue');
-        const background = document.getElementById('background');
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const audio = document.getElementById('audio');
+    const track = document.getElementById('track');
+    const online = document.getElementById('online');
+    const likes = document.getElementById('likes');
+    const likeButton = document.getElementById('like');
+    const startRadioButton = document.getElementById('start-radio');
+    const trackQueue = document.getElementById('track-queue');
+    const background = document.getElementById('background');
 
-        function startRadio() {
-            startRadioButton.style.display = 'none';
-            audio.play();
-        }
+    let lastTrack = null;
 
-        startRadioButton.addEventListener('click', startRadio);
+    function startRadio() {
+      startRadioButton.style.display = 'none';
+      audio.play();
+    }
 
-        let lastTrack = null;
+    startRadioButton.addEventListener('click', startRadio);
 
-        socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
-            const clientTime = Date.now();
-            const latency = (clientTime - serverTime) / 2;
-            const adjustedElapsed = elapsed + latency / 1000;
+    socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
+      const clientTime = Date.now();
+      const latency = (clientTime - serverTime) / 2;
+      const adjustedElapsed = elapsed + latency / 1000;
 
-            if (lastTrack !== trackName) {
-                lastTrack = trackName;
-                audio.src = '/stream';
-                audio.currentTime = adjustedElapsed;
-                audio.play();
-                likeButton.classList.remove('liked');
-                likeButton.disabled = false;
+      if (lastTrack !== trackName) {
+        lastTrack = trackName;
+        audio.src = '/stream';
+        audio.currentTime = adjustedElapsed;
+        audio.play();
+        likeButton.classList.remove('liked');
+        likeButton.disabled = false;
 
-                const color = getRandomColor();
-                applyGradient(color);
-                createBlobs(color);
-            }
+        const color = getRandomColor();
+        applyGradient(color);
+        createBlobs(color);
+      }
 
-            track.textContent = `Текущий трек: ${trackName}`;
+      track.textContent = `Now playing: ${trackName}`;
 
-            // Анимация лайков и онлайна
-            animateNumberChange(document.getElementById('likes'), trackLikes);
-            animateNumberChange(document.getElementById('online'), onlineCount);
+      // Animate numbers
+      animateNumberChange(likes, trackLikes);
+      trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
+    });
 
-            // Очередь ТОЛЬКО 5 элементов, всегда
-            const q = queue.slice(0, 5);
-            trackQueue.innerHTML = q.map(q => `<li>${q}</li>`).join('');
-        });
+    socket.on('online', (count) => {
+      animateNumberChange(online, count);
+    });
 
+    likeButton.addEventListener('click', () => {
+      socket.emit('like');
+      likeButton.disabled = true;
+      likeButton.classList.add('liked');
+    });
 
-        socket.on('online', (count) => {
-            animateNumberChange(online, count);
-        });
+    function getRandomColor() {
+      return {
+        r: Math.floor(Math.random() * 256),
+        g: Math.floor(Math.random() * 256),
+        b: Math.floor(Math.random() * 256)
+      };
+    }
 
-        likeButton.addEventListener('click', () => {
-            socket.emit('like');
-            likeButton.disabled = true;
-            likeButton.classList.add('liked');
-        });
+    function applyGradient({ r, g, b }) {
+      document.body.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}))`;
+    }
 
-        function getRandomColor() {
-            return {
-                r: Math.floor(Math.random() * 256),
-                g: Math.floor(Math.random() * 256),
-                b: Math.floor(Math.random() * 256)
-            };
-        }
+    function createBlobs(color) {
+      background.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        const blob = document.createElement('div');
+        blob.classList.add('blob');
+        const size = Math.floor(Math.random() * 150 + 100);
+        const r = Math.min(255, color.r + (Math.random() * 100 - 50));
+        const g = Math.min(255, color.g + (Math.random() * 100 - 50));
+        const b = Math.min(255, color.b + (Math.random() * 100 - 50));
+        blob.style.background = `rgb(${r}, ${g}, ${b})`;
+        blob.style.width = blob.style.height = `${size}px`;
+        blob.style.top = `${Math.random() * 90}%`;
+        blob.style.left = `${Math.random() * 90}%`;
+        background.appendChild(blob);
+      }
+    }
 
-        function applyGradient({ r, g, b }) {
-            document.body.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}))`;
-        }
+    function animateNumberChange(container, newValue) {
+      const oldValue = parseInt(container.getAttribute('data-value') || '0', 10);
+      if (oldValue === newValue) return;
 
-        function createBlobs(color) {
-            background.innerHTML = '';
-            for (let i = 0; i < 4; i++) {
-                const blob = document.createElement('div');
-                blob.classList.add('blob');
-                const size = Math.floor(Math.random() * 150 + 100);
-                const r = Math.min(255, color.r + (Math.random() * 100 - 50));
-                const g = Math.min(255, color.g + (Math.random() * 100 - 50));
-                const b = Math.min(255, color.b + (Math.random() * 100 - 50));
-                blob.style.background = `rgb(${r}, ${g}, ${b})`;
-                blob.style.width = blob.style.height = `${size}px`;
-                blob.style.top = `${Math.random() * 90}%`;
-                blob.style.left = `${Math.random() * 90}%`;
-                background.appendChild(blob);
-            }
-        }
+      container.setAttribute('data-value', newValue);
+      const span = container.querySelector('span');
+      const newSpan = document.createElement('span');
+      newSpan.textContent = newValue;
+      newSpan.style.transform = 'translateY(100%)';
+      container.appendChild(newSpan);
 
-        function animateNumberChange(container, newValue) {
-            const oldSpan = container.querySelector('span');
-            const oldValue = oldSpan?.textContent || "0";
+      requestAnimationFrame(() => {
+        span.style.transform = 'translateY(-100%)';
+        newSpan.style.transform = 'translateY(0%)';
+      });
 
-            if (oldValue == newValue) return;
+      setTimeout(() => {
+        span.remove();
+      }, 400);
+    }
 
-            const newSpan = document.createElement('span');
-            newSpan.textContent = newValue;
-            newSpan.style.transform = 'translateY(100%)';
-            newSpan.style.position = 'absolute';
-            newSpan.style.left = '0';
-            newSpan.style.width = '100%';
-
-            container.appendChild(newSpan);
-
-            requestAnimationFrame(() => {
-                oldSpan.style.transform = 'translateY(-100%)';
-                newSpan.style.transform = 'translateY(0)';
-            });
-
-            setTimeout(() => {
-                oldSpan.remove();
-            }, 400);
-        }
-
-
-        window.onload = () => {
-            const color = getRandomColor();
-            applyGradient(color);
-            createBlobs(color);
-        };
-    </script>
+    window.onload = () => {
+      const color = getRandomColor();
+      applyGradient(color);
+      createBlobs(color);
+    };
+  </script>
 </body>
 </html>
