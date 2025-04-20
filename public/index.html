@@ -161,116 +161,127 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-    const audio = document.getElementById('audio');
-    const track = document.getElementById('track');
-    const online = document.getElementById('online');
-    const likes = document.getElementById('likes');
-    const likeButton = document.getElementById('like');
-    const startRadioButton = document.getElementById('start-radio');
-    const trackQueue = document.getElementById('track-queue');
-    const background = document.getElementById('background');
+<script>
+  const socket = io();
+  const audio = document.getElementById('audio');
+  const track = document.getElementById('track');
+  const online = document.getElementById('online');
+  const likes = document.getElementById('likes');
+  const likeButton = document.getElementById('like');
+  const startRadioButton = document.getElementById('start-radio');
+  const trackQueue = document.getElementById('track-queue');
+  const background = document.getElementById('background');
 
-    let lastTrack = null;
+  let lastTrack = null;
 
-    function startRadio() {
-      startRadioButton.style.display = 'none';
-      audio.play();
-    }
+  function startRadio() {
+    audio.play()
+      .then(() => {
+        startRadioButton.style.display = 'none';
+      })
+      .catch(() => {
+        // автозапуск не сработал — пользователь должен нажать вручную
+        startRadioButton.style.display = 'block';
+      });
+  }
 
-    startRadioButton.addEventListener('click', startRadio);
+  // Пытаемся автозапустить при загрузке
+  window.addEventListener('load', () => {
+    const color = getRandomColor();
+    applyGradient(color);
+    createBlobs(color);
+    startRadio(); // попытка автозапуска
+  });
 
-    socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
-      const clientTime = Date.now();
-      const latency = (clientTime - serverTime) / 2;
-      const adjustedElapsed = elapsed + latency / 1000;
+  startRadioButton.addEventListener('click', startRadio);
 
-      if (lastTrack !== trackName) {
-        lastTrack = trackName;
-        audio.src = '/stream';
-        audio.currentTime = adjustedElapsed;
-        audio.play();
-        likeButton.classList.remove('liked');
-        likeButton.disabled = false;
+  socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
+    const clientTime = Date.now();
+    const latency = (clientTime - serverTime) / 2;
+    const adjustedElapsed = elapsed + latency / 1000;
 
-        const color = getRandomColor();
-        applyGradient(color);
-        createBlobs(color);
-      }
-
-      track.textContent = `Now playing: ${trackName}`;
-
-      // Animate numbers
-      animateNumberChange(likes, trackLikes);
-      trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
-    });
-
-    socket.on('online', (count) => {
-      animateNumberChange(online, count);
-    });
-
-    likeButton.addEventListener('click', () => {
-      socket.emit('like');
-      likeButton.disabled = true;
-      likeButton.classList.add('liked');
-    });
-
-    function getRandomColor() {
-      return {
-        r: Math.floor(Math.random() * 256),
-        g: Math.floor(Math.random() * 256),
-        b: Math.floor(Math.random() * 256)
-      };
-    }
-
-    function applyGradient({ r, g, b }) {
-      document.body.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}))`;
-    }
-
-    function createBlobs(color) {
-      background.innerHTML = '';
-      for (let i = 0; i < 4; i++) {
-        const blob = document.createElement('div');
-        blob.classList.add('blob');
-        const size = Math.floor(Math.random() * 150 + 100);
-        const r = Math.min(255, color.r + (Math.random() * 100 - 50));
-        const g = Math.min(255, color.g + (Math.random() * 100 - 50));
-        const b = Math.min(255, color.b + (Math.random() * 100 - 50));
-        blob.style.background = `rgb(${r}, ${g}, ${b})`;
-        blob.style.width = blob.style.height = `${size}px`;
-        blob.style.top = `${Math.random() * 90}%`;
-        blob.style.left = `${Math.random() * 90}%`;
-        background.appendChild(blob);
-      }
-    }
-
-    function animateNumberChange(container, newValue) {
-      const oldValue = parseInt(container.getAttribute('data-value') || '0', 10);
-      if (oldValue === newValue) return;
-
-      container.setAttribute('data-value', newValue);
-      const span = container.querySelector('span');
-      const newSpan = document.createElement('span');
-      newSpan.textContent = newValue;
-      newSpan.style.transform = 'translateY(100%)';
-      container.appendChild(newSpan);
-
-      requestAnimationFrame(() => {
-        span.style.transform = 'translateY(-100%)';
-        newSpan.style.transform = 'translateY(0%)';
+    if (lastTrack !== trackName) {
+      lastTrack = trackName;
+      audio.src = '/stream';
+      audio.currentTime = adjustedElapsed;
+      audio.play().then(() => {
+        startRadioButton.style.display = 'none'; // скрываем, если включилось
       });
 
-      setTimeout(() => {
-        span.remove();
-      }, 400);
-    }
+      likeButton.classList.remove('liked');
+      likeButton.disabled = false;
 
-    window.onload = () => {
       const color = getRandomColor();
       applyGradient(color);
       createBlobs(color);
+    }
+
+    track.textContent = `Now playing: ${trackName}`;
+    updateAnimatedNumber(likes, trackLikes);
+    
+    const fullQueue = [...queue.slice(0, 5)];
+    while (fullQueue.length < 5) fullQueue.push('---');
+    trackQueue.innerHTML = fullQueue.map(q => `<li>${q}</li>`).join('');
+  });
+
+  socket.on('online', count => updateAnimatedNumber(online, count));
+
+  likeButton.addEventListener('click', () => {
+    socket.emit('like');
+    likeButton.disabled = true;
+    likeButton.classList.add('liked');
+  });
+
+  function getRandomColor() {
+    return {
+      r: Math.floor(Math.random() * 256),
+      g: Math.floor(Math.random() * 256),
+      b: Math.floor(Math.random() * 256)
     };
-  </script>
+  }
+
+  function applyGradient({ r, g, b }) {
+    document.body.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}))`;
+  }
+
+  function createBlobs(color) {
+    background.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const blob = document.createElement('div');
+      blob.classList.add('blob');
+      const size = Math.floor(Math.random() * 150 + 100);
+      const r = Math.min(255, color.r + (Math.random() * 100 - 50));
+      const g = Math.min(255, color.g + (Math.random() * 100 - 50));
+      const b = Math.min(255, color.b + (Math.random() * 100 - 50));
+      blob.style.background = `rgb(${r}, ${g}, ${b})`;
+      blob.style.width = blob.style.height = `${size}px`;
+      blob.style.top = `${Math.random() * 90}%`;
+      blob.style.left = `${Math.random() * 90}%`;
+      background.appendChild(blob);
+    }
+  }
+
+  function updateAnimatedNumber(container, newValue) {
+    const oldValue = parseInt(container.getAttribute('data-value') || '0');
+    if (oldValue === newValue) return;
+
+    container.setAttribute('data-value', newValue);
+    
+    const oldSpan = container.querySelector('span');
+    const newSpan = document.createElement('span');
+    newSpan.textContent = newValue;
+    newSpan.style.transform = 'translateY(100%)';
+    container.appendChild(newSpan);
+
+    requestAnimationFrame(() => {
+      oldSpan.style.transform = 'translateY(-100%)';
+      newSpan.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+      if (oldSpan && oldSpan.parentElement) oldSpan.remove();
+    }, 400);
+  }
+</script>
 </body>
 </html>
