@@ -93,14 +93,26 @@ function broadcastTrackInfo() {
     const trackName = currentTrack.replace('.mp3', '');
     const elapsedTime = (Date.now() - startTime) / 1000;
     const serverTime = Date.now();
-    const nextTracks = trackQueue.slice(currentTrackIndex, currentTrackIndex + 3);
+    const nextTracks = trackQueue.slice(currentTrackIndex, currentTrackIndex + 5);
+
+    // Получаем длительности
+    const durations = nextTracks.map(filename => {
+        const fullPath = path.join(MUSIC_DIR, filename);
+        try {
+            const metadata = ffmpeg.ffprobeSync(fullPath);
+            return metadata.format.duration;
+        } catch {
+            return 180; // если не удалось — 3 минуты
+        }
+    });
 
     io.emit('track-info', {
         track: trackName,
         likes,
         elapsed: elapsedTime,
         serverTime,
-        queue: nextTracks.map(t => t.replace('.mp3', '')), // Убираем расширения .mp3
+        queue: nextTracks.map(t => t.replace('.mp3', '')),
+        durations,
     });
 }
 
