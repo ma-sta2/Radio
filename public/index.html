@@ -161,7 +161,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-<script>
+  <script>
   const socket = io();
   const audio = document.getElementById('audio');
   const track = document.getElementById('track');
@@ -175,25 +175,20 @@
   let lastTrack = null;
 
   function startRadio() {
-    audio.play()
-      .then(() => {
-        startRadioButton.style.display = 'none';
-      })
-      .catch(() => {
-        // автозапуск не сработал — пользователь должен нажать вручную
-        startRadioButton.style.display = 'block';
-      });
+    startRadioButton.style.display = 'none';
+    audio.play();
   }
 
-  // Пытаемся автозапустить при загрузке
-  window.addEventListener('load', () => {
-    const color = getRandomColor();
-    applyGradient(color);
-    createBlobs(color);
-    startRadio(); // попытка автозапуска
-  });
-
   startRadioButton.addEventListener('click', startRadio);
+
+  // Авто-скрытие кнопки при autoplay (на десктопе)
+  window.addEventListener('DOMContentLoaded', () => {
+    audio.play().then(() => {
+      startRadioButton.style.display = 'none';
+    }).catch(() => {
+      // Автозапуск заблокирован (например, на телефоне)
+    });
+  });
 
   socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
     const clientTime = Date.now();
@@ -205,9 +200,8 @@
       audio.src = '/stream';
       audio.currentTime = adjustedElapsed;
       audio.play().then(() => {
-        startRadioButton.style.display = 'none'; // скрываем, если включилось
+        startRadioButton.style.display = 'none'; // если вдруг теперь получилось — скрыть
       });
-
       likeButton.classList.remove('liked');
       likeButton.disabled = false;
 
@@ -217,14 +211,14 @@
     }
 
     track.textContent = `Now playing: ${trackName}`;
-    updateAnimatedNumber(likes, trackLikes);
-    
-    const fullQueue = [...queue.slice(0, 5)];
-    while (fullQueue.length < 5) fullQueue.push('---');
-    trackQueue.innerHTML = fullQueue.map(q => `<li>${q}</li>`).join('');
+    online.querySelector('span').textContent = onlineCount;
+    likes.querySelector('span').textContent = trackLikes;
+    trackQueue.innerHTML = queue.map(q => `<li>${q}</li>`).join('');
   });
 
-  socket.on('online', count => updateAnimatedNumber(online, count));
+  socket.on('online', (onlineCount) => {
+    online.querySelector('span').textContent = onlineCount;
+  });
 
   likeButton.addEventListener('click', () => {
     socket.emit('like');
@@ -261,27 +255,11 @@
     }
   }
 
-  function updateAnimatedNumber(container, newValue) {
-    const oldValue = parseInt(container.getAttribute('data-value') || '0');
-    if (oldValue === newValue) return;
-
-    container.setAttribute('data-value', newValue);
-    
-    const oldSpan = container.querySelector('span');
-    const newSpan = document.createElement('span');
-    newSpan.textContent = newValue;
-    newSpan.style.transform = 'translateY(100%)';
-    container.appendChild(newSpan);
-
-    requestAnimationFrame(() => {
-      oldSpan.style.transform = 'translateY(-100%)';
-      newSpan.style.transform = 'translateY(0)';
-    });
-
-    setTimeout(() => {
-      if (oldSpan && oldSpan.parentElement) oldSpan.remove();
-    }, 400);
-  }
+  window.onload = () => {
+    const color = getRandomColor();
+    applyGradient(color);
+    createBlobs(color);
+  };
 </script>
 </body>
 </html>
