@@ -143,8 +143,8 @@
   <div id="background"></div>
 
   <div id="info">
-    <div>Online: <span class="animated-number" id="online" data-value="0"><span>0</span></span></div>
-    <div>Liked by users: <span class="animated-number" id="likes" data-value="0"><span>0</span></span></div>
+    <div id="online">Online: <strong>0</strong></div>
+    <div id="likes">Liked by users: <strong>0</strong></div>
   </div>
 
   <div id="queue">
@@ -173,11 +173,10 @@
   const background = document.getElementById('background');
 
   let lastTrack = null;
+  let lastLikedTrack = null;
 
-  // Обновление количества онлайн и лайков без анимации
-  function updateTextNumber(element, value) {
-    element.textContent = value.toString();
-    element.setAttribute('data-value', value);
+  function updateTextNumber(element, label, value) {
+    element.innerHTML = `${label}: <strong>${value}</strong>`;
   }
 
   function startRadio() {
@@ -195,10 +194,12 @@
     const latency = (clientTime - serverTime) / 2;
     const adjustedElapsed = elapsed + latency / 1000;
 
+    // Если трек сменился
     if (lastTrack !== trackName) {
       lastTrack = trackName;
       audio.src = '/stream';
       audio.currentTime = adjustedElapsed;
+
       audio.play().then(() => {
         startRadioButton.style.display = 'none';
       }).catch(() => {
@@ -208,24 +209,34 @@
       likeButton.classList.remove('liked');
       likeButton.disabled = false;
 
+      // Проверяем localStorage — уже лайкали или нет
+      const likedTrack = localStorage.getItem('likedTrack');
+      if (likedTrack === trackName) {
+        likeButton.disabled = true;
+        likeButton.classList.add('liked');
+      }
+
       const color = getRandomColor();
       applyGradient(color);
       createBlobs(color);
     }
 
     track.textContent = `Now playing: ${trackName}`;
-    updateTextNumber(likes, trackLikes);
+    updateTextNumber(likes, 'Liked by users', trackLikes);
     trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
   });
 
   socket.on('online', (count) => {
-    updateTextNumber(online, count);
+    updateTextNumber(online, 'Online', count);
   });
 
   likeButton.addEventListener('click', () => {
-    socket.emit('like');
-    likeButton.disabled = true;
-    likeButton.classList.add('liked');
+    if (lastTrack) {
+      socket.emit('like');
+      localStorage.setItem('likedTrack', lastTrack); // Запоминаем лайкнутый трек
+      likeButton.disabled = true;
+      likeButton.classList.add('liked');
+    }
   });
 
   function getRandomColor() {
@@ -257,7 +268,6 @@
     }
   }
 
-  // Попытка автозапуска при загрузке страницы
   window.onload = () => {
     const color = getRandomColor();
     applyGradient(color);
