@@ -112,6 +112,7 @@ function broadcastTrackInfo() {
         elapsed: elapsedTime,
         serverTime,
         queue: nextTracks.map(t => t.replace('.mp3', '')),
+        duration: trackDuration,
         durations,
     });
 }
@@ -157,7 +158,7 @@ io.on('connection', (socket) => {
         elapsed: (Date.now() - startTime) / 1000,
         serverTime: Date.now(),
         queue: trackQueue.slice(currentTrackIndex, currentTrackIndex + 10).map(t => t.replace('.mp3', '')),
-        duration: durations
+        duration: trackDuration
     });
 
 
