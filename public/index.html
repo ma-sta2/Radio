@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Radio Pizdec</title>
+  <title>Radio Random</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     html, body {
@@ -19,7 +19,6 @@
       color: white;
       text-align: center;
       background: black;
-      transition: background 1.5s ease;
     }
 
     #background {
@@ -174,10 +173,6 @@
       background: rgba(255, 255, 255, 0.35);
     }
 
-    #track {
-      transition: opacity 0.4s ease;   /* ⬅ анимация смены текста */
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; }
       to   { opacity: 1; }
@@ -211,7 +206,7 @@
   </div>
 
   <div class="content">
-    <h1>Radio Pizdec</h1>
+    <h1>Radio Random</h1>
     <p id="track">Now playing: ---</p>
     <button id="start-radio">Start Radio</button>
     <button id="like">Like</button>
@@ -239,7 +234,7 @@
   <!-- Decorative image -->
   <img src="photo1.png" id="corner-image" alt="Decor" />
 
- <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
     const audio = document.getElementById('audio');
