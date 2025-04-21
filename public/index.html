@@ -257,6 +257,10 @@
   let countdownTimer = null;
   let countdownElement = null;
 
+  let lastTrack = null;
+  let trackDuration = 0;
+
+
   function updateTextNumber(element, label, value) {
     element.innerHTML = `${label}: <strong>${value}</strong>`;
   }
@@ -276,51 +280,59 @@
     startRadio();
   });
 
-  socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
+  socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue, duration }) => {
+    trackDuration = duration;
     const clientTime = Date.now();
     const latency = (clientTime - serverTime) / 2;
     const adjustedElapsed = elapsed + latency / 1000;
 
     if (lastTrack !== trackName) {
-      // Анимация исчезновения трека
       track.style.opacity = 0;
       setTimeout(() => {
         lastTrack = trackName;
         track.textContent = `Now playing: ${trackName}`;
         track.style.opacity = 1;
 
-        // Смена трека
         audio.src = '/stream';
         audio.currentTime = adjustedElapsed;
+
         audio.play().then(() => {
           startRadioButton.style.display = 'none';
         }).catch(() => {
           startRadioButton.style.display = 'block';
         });
 
-        // Reset like
         likeButton.classList.remove('liked');
         likeButton.disabled = false;
+
         const likedTrack = localStorage.getItem('likedTrack');
         if (likedTrack === trackName) {
           likeButton.disabled = true;
           likeButton.classList.add('liked');
         }
 
-        // Обновляем цвет фона и шары
         const color = getRandomColor();
         applyGradient(color);
         createBlobs(color);
 
-        // Отчёт времени
-        startCountdown(10);
-
-      }, 400); // плавная смена трека
+        // 🕓 Устанавливаем отсроченный вызов отсчета
+        const countdownStartTime = (trackDuration - adjustedElapsed - 10) * 1000;
+        if (countdownStartTime > 0) {
+          setTimeout(() => {
+            startCountdown(10);
+          }, countdownStartTime);
+        } else {
+          startCountdown(10); // если уже меньше 10 секунд — сразу
+        }
+  
+      }, 400);
     }
 
+    track.textContent = `Now playing: ${trackName}`;
     updateTextNumber(likes, 'Liked by users', trackLikes);
     trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
   });
+
 
   socket.on('online', (count) => {
     updateTextNumber(online, 'Online', count);
