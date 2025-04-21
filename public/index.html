@@ -239,60 +239,49 @@
   <!-- Decorative image -->
   <img src="photo1.png" id="corner-image" alt="Decor" />
 
-  <script src="/socket.io/socket.io.js"></script>
-<script>
-  const socket = io();
-  const audio = document.getElementById('audio');
-  const track = document.getElementById('track');
-  const online = document.getElementById('online');
-  const likes = document.getElementById('likes');
-  const likeButton = document.getElementById('like');
-  const startRadioButton = document.getElementById('start-radio');
-  const trackQueue = document.getElementById('track-queue');
-  const background = document.getElementById('background');
-  const modal = document.getElementById('modal');
-  const confirmBtn = document.getElementById('confirm-btn');
+ <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const audio = document.getElementById('audio');
+    const track = document.getElementById('track');
+    const online = document.getElementById('online');
+    const likes = document.getElementById('likes');
+    const likeButton = document.getElementById('like');
+    const startRadioButton = document.getElementById('start-radio');
+    const trackQueue = document.getElementById('track-queue');
+    const background = document.getElementById('background');
 
-  let lastTrack = null;
-  let countdownTimer = null;
-  let countdownElement = null;
+    const modal = document.getElementById('modal');
+    const confirmBtn = document.getElementById('confirm-btn');
 
-  let lastTrack = null;
-  let trackDuration = 0;
+    let lastTrack = null;
 
+    function updateTextNumber(element, label, value) {
+      element.innerHTML = ${label}: <strong>${value}</strong>;
+    }
 
-  function updateTextNumber(element, label, value) {
-    element.innerHTML = `${label}: <strong>${value}</strong>`;
-  }
+    function startRadio() {
+      audio.play().then(() => {
+        startRadioButton.style.display = 'none';
+      }).catch(() => {
+        startRadioButton.style.display = 'block';
+      });
+    }
 
-  function startRadio() {
-    audio.play().then(() => {
-      startRadioButton.style.display = 'none';
-    }).catch(() => {
-      startRadioButton.style.display = 'block';
+    startRadioButton.addEventListener('click', startRadio);
+
+    confirmBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      startRadio();
     });
-  }
 
-  startRadioButton.addEventListener('click', startRadio);
+    socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue }) => {
+      const clientTime = Date.now();
+      const latency = (clientTime - serverTime) / 2;
+      const adjustedElapsed = elapsed + latency / 1000;
 
-  confirmBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-    startRadio();
-  });
-
-  socket.on('track-info', ({ track: trackName, likes: trackLikes, elapsed, serverTime, queue, duration }) => {
-    trackDuration = duration;
-    const clientTime = Date.now();
-    const latency = (clientTime - serverTime) / 2;
-    const adjustedElapsed = elapsed + latency / 1000;
-
-    if (lastTrack !== trackName) {
-      track.style.opacity = 0;
-      setTimeout(() => {
+      if (lastTrack !== trackName) {
         lastTrack = trackName;
-        track.textContent = `Now playing: ${trackName}`;
-        track.style.opacity = 1;
-
         audio.src = '/stream';
         audio.currentTime = adjustedElapsed;
 
@@ -314,103 +303,60 @@
         const color = getRandomColor();
         applyGradient(color);
         createBlobs(color);
-
-        // 🕓 Устанавливаем отсроченный вызов отсчета
-        const countdownStartTime = (trackDuration - adjustedElapsed - 10) * 1000;
-        if (countdownStartTime > 0) {
-          setTimeout(() => {
-            startCountdown(10);
-          }, countdownStartTime);
-        } else {
-          startCountdown(10); // если уже меньше 10 секунд — сразу
-        }
-  
-      }, 400);
-    }
-
-    track.textContent = `Now playing: ${trackName}`;
-    updateTextNumber(likes, 'Liked by users', trackLikes);
-    trackQueue.innerHTML = queue.slice(0, 5).map(q => `<li>${q}</li>`).join('');
-  });
-
-
-  socket.on('online', (count) => {
-    updateTextNumber(online, 'Online', count);
-  });
-
-  likeButton.addEventListener('click', () => {
-    if (lastTrack) {
-      socket.emit('like');
-      localStorage.setItem('likedTrack', lastTrack);
-      likeButton.disabled = true;
-      likeButton.classList.add('liked');
-    }
-  });
-
-  function getRandomColor() {
-    return {
-      r: Math.floor(Math.random() * 256),
-      g: Math.floor(Math.random() * 256),
-      b: Math.floor(Math.random() * 256)
-    };
-  }
-
-  function applyGradient({ r, g, b }) {
-    document.body.style.transition = 'background 1.5s ease';
-    document.body.style.background = `linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}))`;
-  }
-
-  function createBlobs(color) {
-    background.innerHTML = '';
-    for (let i = 0; i < 8; i++) {
-      const blob = document.createElement('div');
-      blob.classList.add('blob');
-      const size = Math.floor(Math.random() * 150 + 100);
-      const r = Math.min(255, color.r + (Math.random() * 100 - 50));
-      const g = Math.min(255, color.g + (Math.random() * 100 - 50));
-      const b = Math.min(255, color.b + (Math.random() * 100 - 50));
-      blob.style.background = `rgb(${r}, ${g}, ${b})`;
-      blob.style.width = blob.style.height = `${size}px`;
-      blob.style.top = `${Math.random() * 90}%`;
-      blob.style.left = `${Math.random() * 90}%`;
-      background.appendChild(blob);
-    }
-  }
-
-  function startCountdown(seconds) {
-    // Удалить старый отчёт, если есть
-    if (countdownElement) countdownElement.remove();
-    if (countdownTimer) clearInterval(countdownTimer);
-
-    countdownElement = document.createElement('div');
-    countdownElement.style.position = 'absolute';
-    countdownElement.style.bottom = '20px';
-    countdownElement.style.right = '20px';
-    countdownElement.style.fontSize = '16px';
-    countdownElement.style.color = '#ccc';
-    countdownElement.style.opacity = '0.85';
-    countdownElement.style.zIndex = '99';
-    document.body.appendChild(countdownElement);
-
-    let remaining = seconds;
-    countdownElement.textContent = `Next track in: ${remaining}s`;
-
-    countdownTimer = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        countdownElement.remove();
-        clearInterval(countdownTimer);
-      } else {
-        countdownElement.textContent = `Next track in: ${remaining}s`;
       }
-    }, 1000);
-  }
 
-  window.onload = () => {
-    const color = getRandomColor();
-    applyGradient(color);
-    createBlobs(color);
-  };
-</script>
+      track.textContent = Now playing: ${trackName};
+      updateTextNumber(likes, 'Liked by users', trackLikes);
+      trackQueue.innerHTML = queue.slice(0, 5).map(q => <li>${q}</li>).join('');
+    });
+
+    socket.on('online', (count) => {
+      updateTextNumber(online, 'Online', count);
+    });
+
+    likeButton.addEventListener('click', () => {
+      if (lastTrack) {
+        socket.emit('like');
+        localStorage.setItem('likedTrack', lastTrack);
+        likeButton.disabled = true;
+        likeButton.classList.add('liked');
+      }
+    });
+
+    function getRandomColor() {
+      return {
+        r: Math.floor(Math.random() * 256),
+        g: Math.floor(Math.random() * 256),
+        b: Math.floor(Math.random() * 256)
+      };
+    }
+
+    function applyGradient({ r, g, b }) {
+      document.body.style.background = linear-gradient(135deg, rgb(${r}, ${g}, ${b}), rgb(${r - 40}, ${g - 40}, ${b - 40}));
+    }
+
+    function createBlobs(color) {
+      background.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const blob = document.createElement('div');
+        blob.classList.add('blob');
+        const size = Math.floor(Math.random() * 150 + 100);
+        const r = Math.min(255, color.r + (Math.random() * 100 - 50));
+        const g = Math.min(255, color.g + (Math.random() * 100 - 50));
+        const b = Math.min(255, color.b + (Math.random() * 100 - 50));
+        blob.style.background = rgb(${r}, ${g}, ${b});
+        blob.style.width = blob.style.height = ${size}px;
+        blob.style.top = ${Math.random() * 90}%;
+        blob.style.left = ${Math.random() * 90}%;
+        background.appendChild(blob);
+      }
+    }
+
+    window.onload = () => {
+      const color = getRandomColor();
+      applyGradient(color);
+      createBlobs(color);
+    };
+  </script>
 </body>
 </html>
