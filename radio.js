@@ -112,7 +112,7 @@ function broadcastTrackInfo() {
         elapsed: elapsedTime,
         serverTime,
         queue: nextTracks.map(t => t.replace('.mp3', '')),
-        duration: trackDuration,
+        duration: durations,
         durations,
     });
 }
